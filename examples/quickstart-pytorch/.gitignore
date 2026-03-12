@@ -1,0 +1,15 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Virtual environments
+venv/
+venv310/
+
+# IDE files
+.idea/
+
+# Data and outputs
+data/
+runs/
+final_model.pt
