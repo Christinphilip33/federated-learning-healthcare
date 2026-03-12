@@ -63,7 +63,7 @@ jobs:
         run: |
           echo -e '\n```{toctree}\n:hidden:\n:maxdepth: 2\n:glob:\n\n*/*\n```' >> intelligence/docs/source/ts-api-ref/index.md
       - name: Upload TS docs artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ts-docs
           path: intelligence/docs/source/ts-api-ref/
@@ -94,7 +94,7 @@ jobs:
           rm -f intelligence/docs/source/swift-api-ref/index.md.bak
           echo -e '\n```{toctree}\n:hidden:\n:maxdepth: 2\n:glob:\n\n*/*\n```' >> intelligence/docs/source/swift-api-ref/index.md
       - name: Upload Swift docs artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: swift-docs
           path: intelligence/docs/source/swift-api-ref/
@@ -119,7 +119,7 @@ jobs:
           ./intelligence/dev/build-kt-docs.sh
 
       - name: Upload Kotlin docs artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: kt-docs
           path: intelligence/docs/source/kt-api-ref/
