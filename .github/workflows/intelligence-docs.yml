@@ -144,19 +144,19 @@ jobs:
           python -m poetry install --extras "simulation"
       - name: Download TS docs
         if: ${{ github.ref == 'refs/heads/main' && github.repository == 'adap/flower' && !github.event.pull_request.head.repo.fork }}
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: ts-docs
           path: intelligence/docs/source/ts-api-ref/
       - name: Download Swift docs
         if: ${{ github.ref == 'refs/heads/main' && github.repository == 'adap/flower' && !github.event.pull_request.head.repo.fork }}
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: swift-docs
           path: intelligence/docs/source/swift-api-ref/
       - name: Download Kotlin docs
         if: ${{ github.ref == 'refs/heads/main' && github.repository == 'adap/flower' && !github.event.pull_request.head.repo.fork }}
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: kt-docs
           path: intelligence/docs/source/kt-api-ref/
