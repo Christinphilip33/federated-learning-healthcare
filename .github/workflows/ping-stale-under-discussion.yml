@@ -15,7 +15,7 @@ jobs:
       SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID_SUPPORT_GITHUB_PRS }}
     steps:
       - name: Ping stale Under Discussion issues via Slack
-        uses: actions/github-script@v6
+        uses: actions/github-script@v8
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
