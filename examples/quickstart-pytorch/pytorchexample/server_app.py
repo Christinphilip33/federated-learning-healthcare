@@ -21,6 +21,8 @@ class CustomFedAvg(FedAvg):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.selection_count: dict[int, int] = {}  # logical_id -> count
+        self.client_scores: dict[int, float] = {}  # logical_id -> score
+        self.node_to_logical: dict[int, int] = {}  # node_id -> logical_id
 
     def _get_logical_mapping(self, grid: Grid) -> dict[int, int]:
         """
@@ -46,6 +48,7 @@ class CustomFedAvg(FedAvg):
     def configure_train(self, server_round: int, arrays: ArrayRecord, config: ConfigRecord, grid: Grid):
         # Build logical->actual mapping
         logical_to_node = self._get_logical_mapping(grid)
+        self.node_to_logical = {v: k for k, v in logical_to_node.items()}
         num_clients = len(logical_to_node)
 
         # Make sure counters exist
@@ -74,6 +77,25 @@ class CustomFedAvg(FedAvg):
             k = min(clients_per_round, len(all_logical_ids))
             chosen_logical = rng.choice(all_logical_ids, size=k, replace=False).tolist()
 
+        elif selection_mode == "score":
+            print(f"\n[Round {server_round}] Current score table (Logical ID -> Score):")
+            print(self.client_scores)
+
+            if not self.client_scores:
+                # Round 1: No previous scores exist, fallback to random
+                print(f"[Round {server_round}] No scores exist yet. Falling back to random selection.")
+                rng = np.random.default_rng(server_round)
+                k = min(clients_per_round, len(all_logical_ids))
+                chosen_logical = rng.choice(all_logical_ids, size=k, replace=False).tolist()
+            else:
+                # Rank logical clients based on recorded scores (descending)
+                ranked_clients = sorted(
+                    self.client_scores.items(),
+                    key=lambda item: item[1],
+                    reverse=True
+                )
+                k = min(clients_per_round, len(ranked_clients))
+                chosen_logical = [lid for lid, score in ranked_clients[:k]]
         else:
             chosen_logical = all_logical_ids
 
@@ -116,19 +138,31 @@ class CustomFedAvg(FedAvg):
         weighted_acc_sum = 0.0
         weighted_loss_sum = 0.0
 
+        from flwr.common import FitRes
+
         for reply in replies:
-            m = reply.content["metrics"]
+            if not isinstance(reply, FitRes) and hasattr(reply, "content"):
+                m = reply.content["metrics"]
 
-            # MetricRecord behaves like a dict in most setups, but we stay safe:
-            md = m.to_dict() if hasattr(m, "to_dict") else dict(m)
+                # Extract reply metadata to figure out src node ID
+                src_node_id = reply.metadata.src_node_id
+                logical_id = self.node_to_logical.get(src_node_id)
 
-            num_ex = int(md.get("num-examples", 0))
-            acc = float(md.get("local_train_acc", 0.0))
-            loss = float(md.get("train_loss", 0.0))
+                # MetricRecord behaves like a dict in most setups, but we stay safe:
+                md = m.to_dict() if hasattr(m, "to_dict") else dict(m)
 
-            total_examples += num_ex
-            weighted_acc_sum += num_ex * acc
-            weighted_loss_sum += num_ex * loss
+                num_ex = int(md.get("num-examples", 0))
+                acc = float(md.get("local_train_acc", 0.0))
+                loss = float(md.get("train_loss", 0.0))
+                client_score = float(md.get("client_score", 0.0))
+
+                # Track score for future selection modes
+                if logical_id is not None:
+                    self.client_scores[logical_id] = client_score
+
+                total_examples += num_ex
+                weighted_acc_sum += num_ex * acc
+                weighted_loss_sum += num_ex * loss
 
         if total_examples > 0:
             weighted_train_acc = weighted_acc_sum / total_examples

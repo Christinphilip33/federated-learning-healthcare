@@ -38,6 +38,9 @@ def train(msg: Message, context: Context):
     # 2) Quick local check (optional but useful)
     local_eval_loss, local_train_acc = test_fn(model, trainloader, device)
 
+    # Calculate selection score
+    client_score = local_train_acc / (train_loss + 1e-8)
+
     # 3) Send back weights + metrics
     content = RecordDict({
         "arrays": ArrayRecord(model.state_dict()),
@@ -45,6 +48,7 @@ def train(msg: Message, context: Context):
             "train_loss": float(train_loss),
             "local_eval_loss": float(local_eval_loss),
             "local_train_acc": float(local_train_acc),
+            "client_score": float(client_score),
 
             # IMPORTANT: Flower expects this exact key name
             "num-examples": int(len(trainloader.dataset)),
