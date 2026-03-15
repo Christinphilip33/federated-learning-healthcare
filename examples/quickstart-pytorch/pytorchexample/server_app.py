@@ -58,6 +58,7 @@ class CustomFedAvg(FedAvg):
 
         # Read config
         selection_mode = config.get("selection-mode", "fixed")
+        self.current_mode = selection_mode
         raw_selected = config.get("selected-client-ids", 0)
         selected_logical_ids = self._parse_selected_ids(raw_selected)
 
@@ -109,6 +110,8 @@ class CustomFedAvg(FedAvg):
         # Update counters
         for lid in chosen_logical:
             self.selection_count[lid] += 1
+            
+        self.last_selected = chosen_logical
 
         # Print summary (this is what you show supervisor)
         print(f"\n[Round {server_round}] Selection mode: {selection_mode}")
@@ -180,6 +183,8 @@ class CustomFedAvg(FedAvg):
         print(f"\n[Round {server_round}] Weighted train acc: {weighted_train_acc:.4f}")
         print(f"[Round {server_round}] Weighted train loss: {weighted_train_loss:.4f}")
         print(f"[Round {server_round}] Selected prediction score: {selected_prediction_score:.4f}\n")
+        
+        self.last_avg_score = selected_prediction_score
 
         # Add these new aggregated metrics so they show up in logs/results
         extra = MetricRecord({
@@ -192,6 +197,24 @@ class CustomFedAvg(FedAvg):
         merged = MetricRecord({**dict(aggregated_metrics), **dict(extra)})
 
         return aggregated_arrays, merged
+
+    def evaluate(self, server_round: int, parameters):
+        loss_metrics = super().evaluate(server_round, parameters)
+        if loss_metrics is not None and server_round > 0:
+            loss, metrics = loss_metrics
+            acc = metrics.get("accuracy", 0.0)
+            mode = getattr(self, "current_mode", "unknown")
+            selected = getattr(self, "last_selected", [])
+            avg_score = getattr(self, "last_avg_score", 0.0)
+
+            import csv, os
+            file_exists = os.path.isfile("experiment_results.csv")
+            with open("experiment_results.csv", "a", newline='') as f:
+                writer = csv.writer(f)
+                if not file_exists:
+                    writer.writerow(["selection_mode", "round", "global_acc", "global_loss", "selected_clients", "avg_score"])
+                writer.writerow([mode, server_round, acc, loss, str(selected), avg_score])
+        return loss_metrics
 
     def summary(self) -> None:
         print("\n========== FINAL CLIENT SELECTION COUNTS ==========")

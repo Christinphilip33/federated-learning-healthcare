@@ -7,19 +7,21 @@ from torchvision import datasets, transforms
 
 # ---------------- Model ----------------
 class Net(nn.Module):
-    def __init__(self, num_classes: int = 10):
+    def __init__(self, num_classes: int = 6):
         super().__init__()
+        # Input shape: (Batch, 9 channels, 128 sequence length)
         self.features = nn.Sequential(
-            nn.Conv2d(3, 32, 3, padding=1), nn.ReLU(),
-            nn.Conv2d(32, 64, 3, padding=1), nn.ReLU(),
-            nn.MaxPool2d(2),                       # 32->16
-            nn.Conv2d(64, 128, 3, padding=1), nn.ReLU(),
-            nn.MaxPool2d(2),                       # 16->8
+            nn.Conv1d(9, 64, kernel_size=3, padding=1), nn.ReLU(),
+            nn.Conv1d(64, 64, kernel_size=3, padding=1), nn.ReLU(),
+            nn.Dropout(0.5),
+            nn.MaxPool1d(2),                       # 128 -> 64
+            nn.Conv1d(64, 128, kernel_size=3, padding=1), nn.ReLU(),
+            nn.MaxPool1d(2),                       # 64 -> 32
         )
         self.classifier = nn.Sequential(
             nn.Flatten(),
-            nn.Linear(128 * 8 * 8, 256), nn.ReLU(),
-            nn.Linear(256, num_classes),
+            nn.Linear(128 * 32, 100), nn.ReLU(),
+            nn.Linear(100, num_classes),
         )
 
     def forward(self, x):
@@ -27,22 +29,11 @@ class Net(nn.Module):
 
 
 # ---------------- Datasets ----------------
-def _transforms():
-    return transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize(
-            (0.4914, 0.4822, 0.4465),
-            (0.2023, 0.1994, 0.2010),
-        ),
-    ])
-
+from pytorchexample.dataset import get_har_datasets
 
 def load_datasets():
-    """Return raw CIFAR-10 train/test."""
-    tfm = _transforms()
-    trainset = datasets.CIFAR10(root="./data", train=True, download=True, transform=tfm)
-    testset = datasets.CIFAR10(root="./data", train=False, download=True, transform=tfm)
-    return trainset, testset
+    """Return raw HAR train/test."""
+    return get_har_datasets()
 
 
 def load_centralized_dataset(batch_size: int = 32):
@@ -53,8 +44,8 @@ def load_centralized_dataset(batch_size: int = 32):
 
 # ---------------- Dirichlet partitioning ----------------
 def _labels_from_dataset(ds) -> np.ndarray:
-    # CIFAR-10 exposes labels as ds.targets
-    return np.array(ds.targets, dtype=np.int64)
+    # Handle TensorDataset
+    return ds.tensors[1].numpy()
 
 
 def _dirichlet_partition_indices(

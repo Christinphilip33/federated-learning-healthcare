@@ -12,6 +12,9 @@ dependencies = [
     "flwr-datasets[vision]>=0.5.0",
     "torch==2.8.0",
     "torchvision==0.23.0",
+    "requests",
+    "scikit-learn",
+    "pandas",
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -27,10 +30,10 @@ clientapp = "pytorchexample.client_app:app"
 [tool.flwr.app.config]
 num-server-rounds = 2
 fraction-evaluate = 0.5
-local-epochs = 2
-learning-rate = 0.01
+local-epochs = 5
+learning-rate = 0.001
 batch-size = 32
-dirichlet-alpha = 10.0
+dirichlet-alpha = 0.1
 num-partitions = 10
 selection-mode = "score"
 selected-client-ids = 0
@@ -41,13 +44,29 @@ clients-per-round = 5
 
 
 
-[tool.flwr.federations]
-default = "local-simulation"
 
-[tool.flwr.federations.local-simulation]
-options.num-supernodes = 10
+#######################################################################
+# CONFIGURATION MIGRATION NOTICE:
+#
+# What was previously called "federation config" for SuperLink
+# connections in pyproject.toml has been renamed and moved.
+#
+# These settings are now **SuperLink connection configuration**
+# and are defined in the Flower configuration file.
+#
+# The entries below are commented out intentionally and are kept
+# only as a migration reference.
+#
+# Docs: https://flower.ai/docs/framework/ref-flower-configuration.html
+#######################################################################
 
-[tool.flwr.federations.local-simulation-gpu]
-options.num-supernodes = 10
-options.backend.client-resources.num-cpus = 2 # each ClientApp assumes to use 2CPUs
-options.backend.client-resources.num-gpus = 0.2 # at most 5 ClientApp will run in a given GPU
+# [tool.flwr.federations]
+# default = "local-simulation"
+
+# [tool.flwr.federations.local-simulation]
+# options.num-supernodes = 10
+
+# [tool.flwr.federations.local-simulation-gpu]
+# options.num-supernodes = 10
+# options.backend.client-resources.num-cpus = 2 # each ClientApp assumes to use 2CPUs
+# options.backend.client-resources.num-gpus = 0.2 # at most 5 ClientApp will run in a given GPU
