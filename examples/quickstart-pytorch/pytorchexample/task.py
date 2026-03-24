@@ -7,11 +7,11 @@ from torchvision import datasets, transforms
 
 # ---------------- Model ----------------
 class Net(nn.Module):
-    def __init__(self, num_classes: int = 6):
+    def __init__(self, num_classes: int = 18):
         super().__init__()
-        # Input shape: (Batch, 9 channels, 128 sequence length)
+        # Input shape: (Batch, 3 channels, 128 sequence length)
         self.features = nn.Sequential(
-            nn.Conv1d(9, 64, kernel_size=3, padding=1), nn.ReLU(),
+            nn.Conv1d(3, 64, kernel_size=3, padding=1), nn.ReLU(),
             nn.Conv1d(64, 64, kernel_size=3, padding=1), nn.ReLU(),
             nn.Dropout(0.5),
             nn.MaxPool1d(2),                       # 128 -> 64

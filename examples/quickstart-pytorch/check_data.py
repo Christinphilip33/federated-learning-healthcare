@@ -101,16 +101,6 @@ def load_wisdm_watch_accel(window_size=128, stride=64):
     
     return X_tensor, y_tensor
 
-def get_har_datasets():
+if __name__ == "__main__":
     X, y = load_wisdm_watch_accel()
-    
-    dataset_size = len(y)
-    indices = torch.randperm(dataset_size, generator=torch.Generator().manual_seed(42))
-    split = int(0.8 * dataset_size)
-    
-    train_idx, test_idx = indices[:split], indices[split:]
-    
-    trainset = TensorDataset(X[train_idx], y[train_idx])
-    testset = TensorDataset(X[test_idx], y[test_idx])
-    
-    return trainset, testset
+    print("Test successful!")
