@@ -38,7 +38,7 @@ def _transforms():
     ])
 
 def load_datasets() -> Tuple[datasets.CIFAR10, datasets.CIFAR10]:
-    """Return raw CIFAR-10 train/test datasets (no partitioning)."""
+    """Return raw WISDM wearable accelerometer datasets (no partitioning)."""
     tfm = _transforms()
     trainset = datasets.CIFAR10(root="./data", train=True, download=True, transform=tfm)
     testset  = datasets.CIFAR10(root="./data", train=False, download=True, transform=tfm)
@@ -60,7 +60,7 @@ def load_centralized_dataset(batch_size: int) -> Tuple[DataLoader, DataLoader]:
 
 # ---------- Dirichlet partitioning ----------
 def _labels_from_dataset(ds) -> np.ndarray:
-    # CIFAR-10 stores labels as targets
+    # Dataset stores labels as targets
     return np.array(ds.targets, dtype=np.int64)
 
 def _dirichlet_partition_indices(

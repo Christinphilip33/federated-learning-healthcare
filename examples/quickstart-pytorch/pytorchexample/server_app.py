@@ -23,6 +23,7 @@ class CustomFedAvg(FedAvg):
         self.selection_count: dict[int, int] = {}  # logical_id -> count
         self.client_scores: dict[int, float] = {}  # logical_id -> score
         self.node_to_logical: dict[int, int] = {}  # node_id -> logical_id
+        self.max_examples_seen = 0
 
     def _get_logical_mapping(self, grid: Grid) -> dict[int, int]:
         """
@@ -89,9 +90,16 @@ class CustomFedAvg(FedAvg):
                 k = min(clients_per_round, len(all_logical_ids))
                 chosen_logical = rng.choice(all_logical_ids, size=k, replace=False).tolist()
             else:
-                # Rank logical clients based on recorded scores (descending)
+                # Rank logical clients. Unseen clients get a high default score so they are explored.
+                scores_to_rank = {}
+                for lid in all_logical_ids:
+                    if lid in self.client_scores:
+                        scores_to_rank[lid] = self.client_scores[lid]
+                    else:
+                        scores_to_rank[lid] = 999.0  # Max priority for unexplored clients
+                        
                 ranked_clients = sorted(
-                    self.client_scores.items(),
+                    scores_to_rank.items(),
                     key=lambda item: item[1],
                     reverse=True
                 )
@@ -157,11 +165,20 @@ class CustomFedAvg(FedAvg):
                 num_ex = int(md.get("num-examples", 0))
                 acc = float(md.get("local_train_acc", 0.0))
                 loss = float(md.get("train_loss", 0.0))
-                client_score = float(md.get("client_score", 0.0))
 
-                # Track score for future selection modes
                 if logical_id is not None:
-                    self.client_scores[logical_id] = client_score
+                    # N_max tracking
+                    self.max_examples_seen = max(self.max_examples_seen, num_ex)
+                    
+                    # P_i: Participation count so far (incremented at start of round in configure_train, 
+                    # so this correctly reflects the number of times they have already participated for the *next* round's selection)
+                    p_i = self.selection_count.get(logical_id, 1)
+                    
+                    # New formal score combining accuracy, inverted loss, fairness penalty, and data size
+                    n_max = max(1, self.max_examples_seen)
+                    new_score = 0.35 * acc + 0.25 * (1.0 / (1.0 + loss)) + 0.15 * (1.0 / (1.0 + p_i)) + 0.25 * (num_ex / n_max)
+                    
+                    self.client_scores[logical_id] = new_score
 
                 total_examples += num_ex
                 weighted_acc_sum += num_ex * acc
@@ -212,8 +229,12 @@ class CustomFedAvg(FedAvg):
             with open("experiment_results.csv", "a", newline='') as f:
                 writer = csv.writer(f)
                 if not file_exists:
-                    writer.writerow(["selection_mode", "round", "global_acc", "global_loss", "selected_clients", "avg_score"])
-                writer.writerow([mode, server_round, acc, loss, str(selected), avg_score])
+                    writer.writerow(["selection_mode", "round", "global_acc", "global_loss", "selected_clients", "avg_score", "score_details"])
+                # Log score details cleanly without breaking previous columns
+                
+                # Format scores for easier reading
+                formatted_scores = {k: round(v, 4) for k, v in self.client_scores.items()}
+                writer.writerow([mode, server_round, acc, loss, str(selected), avg_score, str(formatted_scores)])
         return loss_metrics
 
     def summary(self) -> None:

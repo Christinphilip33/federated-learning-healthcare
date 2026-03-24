@@ -129,7 +129,7 @@ def plot_results():
         
     plt.xlabel("Training Rounds")
     plt.ylabel("Global Accuracy")
-    plt.title("Federated Learning Client Selection Comparison")
+    plt.title("Wearable Activity Monitoring - FL Selection Comparison")
     plt.legend()
     plt.grid(True)
     

@@ -1,4 +1,4 @@
-"""pytorchexample: Flower / PyTorch ClientApp using Dirichlet partitions."""
+"""pytorchexample: Flower / PyTorch ClientApp using WISDM Wearable Data and Dirichlet partitions."""
 import torch
 from flwr.app import ArrayRecord, Context, Message, MetricRecord, RecordDict
 from flwr.clientapp import ClientApp

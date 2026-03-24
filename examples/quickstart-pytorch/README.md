@@ -1,12 +1,12 @@
 ---
-tags: [quickstart, vision, fds]
-dataset: [CIFAR-10]
-framework: [torch, torchvision]
+tags: [wearable, activity-monitoring, wisdm]
+dataset: [WISDM]
+framework: [torch, torchvision, flower]
 ---
 
-# Federated Learning with PyTorch and Flower (Quickstart Example)
+# Privacy-Preserving Wearable Activity Monitoring (Federated Learning)
 
-This introductory example to Flower uses PyTorch, but deep knowledge of PyTorch is not necessarily required to run the example. However, it will help you understand how to adapt Flower to your use case. Running this example in itself is quite easy. This example uses [Flower Datasets](https://flower.ai/docs/datasets/) to download, partition and preprocess the CIFAR-10 dataset.
+This project demonstrates privacy-preserving wearable activity monitoring using Federated Learning with PyTorch and Flower. It uses the WISDM smartwatch accelerometer dataset (18 activity classes, 3-channel 128-timestep windows), partitioned across 10 virtual clients in a non-IID Dirichlet setup with advanced score-based client selection.
 
 ## Set up the project
 
