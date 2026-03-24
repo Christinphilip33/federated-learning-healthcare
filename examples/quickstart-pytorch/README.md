@@ -46,21 +46,25 @@ pip install -e .
 
 You can run your Flower project in both _simulation_ and _deployment_ mode without making changes to the code. If you are starting with Flower, we recommend you using the _simulation_ mode as it requires fewer components to be launched manually. By default, `flwr run` will make use of the Simulation Engine.
 
-### Run with the Simulation Engine
+### Run the Wearable Demo Experiment
+
+To run the custom experiment orchestrator that executes a 5-round Random Selection baseline followed by a 5-round Score-Based selection (our fairness-aware algorithm), simply use standard Python:
+
+```bash
+python run_experiments.py
+```
+
+This script will automatically:
+1. Orchestrate all 10 clients and Server logic.
+2. Accumulate accuracy and loss numbers round-by-round.
+3. Save the results to `experiment_results.csv`.
+4. Generate the side-by-side comparison plot `fl_comparison.png`.
 
 > [!TIP]
-> This example might run faster when the `ClientApp`s have access to a GPU. If your system has one, you can make use of it by configuring the `backend.client-resources` component in `pyproject.toml`. If you want to try running the example with GPU right away, use the `local-simulation-gpu` federation as shown below. Check the [Simulation Engine documentation](https://flower.ai/docs/framework/how-to-run-simulations.html) to learn more.
-
-```bash
-# Run with the default federation (CPU only)
-flwr run .
-```
-
-You can also override some of the settings for your `ClientApp` and `ServerApp` defined in `pyproject.toml`. For example:
-
-```bash
-flwr run . --run-config "num-server-rounds=5 learning-rate=0.05"
-```
+> If you wish to quickly verify the memory footprint and CPU latency of the Activity Monitoring model for smartwatch deployments, run the hardware feasibility script:
+> ```bash
+> python hardware_check.py
+> ```
 
 Run the project in the `local-simulation-gpu` federation that gives CPU and GPU resources to each `ClientApp`. By default, at most 5x`ClientApp` will run in parallel in the available GPU. You can tweak the degree of parallelism by adjusting the settings of this federation in the `pyproject.toml`.
 
