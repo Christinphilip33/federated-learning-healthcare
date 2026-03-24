@@ -115,9 +115,9 @@ class CustomFedAvg(FedAvg):
         # Convert logical -> actual node ids
         chosen_node_ids = [logical_to_node[lid] for lid in chosen_logical]
 
-        # Update counters
-        for lid in chosen_logical:
-            self.selection_count[lid] += 1
+        # Update counters - MOVED to aggregate_train to ensure scoring uses prior count
+        # for lid in chosen_logical:
+        #     self.selection_count[lid] += 1
             
         self.last_selected = chosen_logical
 
@@ -170,9 +170,10 @@ class CustomFedAvg(FedAvg):
                     # N_max tracking
                     self.max_examples_seen = max(self.max_examples_seen, num_ex)
                     
-                    # P_i: Participation count so far (incremented at start of round in configure_train, 
-                    # so this correctly reflects the number of times they have already participated for the *next* round's selection)
-                    p_i = self.selection_count.get(logical_id, 1)
+                    # P_i: Participation count BEFORE the current round.
+                    # Since we moved the increment to the end of aggregate_train, self.selection_count accurately 
+                    # reflects how many times the client was selected BEFORE this current round started.
+                    p_i = self.selection_count.get(logical_id, 0)
                     
                     # New formal score combining accuracy, inverted loss, fairness penalty, and data size
                     n_max = max(1, self.max_examples_seen)
@@ -212,6 +213,11 @@ class CustomFedAvg(FedAvg):
 
         # Merge with whatever FedAvg already returned
         merged = MetricRecord({**dict(aggregated_metrics), **dict(extra)})
+
+        # Now that all scoring is complete using the PRIOR participation count,
+        # safely increment the participation count for the clients selected this round.
+        for lid in getattr(self, "last_selected", []):
+            self.selection_count[lid] = self.selection_count.get(lid, 0) + 1
 
         return aggregated_arrays, merged
 
