@@ -140,7 +140,7 @@ if __name__ == "__main__":
     if os.path.exists("experiment_results.csv"):
         os.remove("experiment_results.csv")
         
-    run_experiment(selection_mode="random", num_rounds=5, clients_per_round=5, alpha=0.1)
-    run_experiment(selection_mode="score", num_rounds=5, clients_per_round=5, alpha=0.1)
+    run_experiment(selection_mode="random", num_rounds=25, clients_per_round=5, alpha=0.1)
+    run_experiment(selection_mode="score", num_rounds=25, clients_per_round=5, alpha=0.1)
     
     plot_results()

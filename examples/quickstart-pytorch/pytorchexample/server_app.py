@@ -83,7 +83,12 @@ class CustomFedAvg(FedAvg):
             print(f"\n[Round {server_round}] Current score table (Logical ID -> Score):")
             print(self.client_scores)
 
-            if not self.client_scores:
+            # WARM-UP: use random selection for first 2 rounds
+            if server_round <= 2:
+                rng = np.random.default_rng(server_round)
+                k = min(clients_per_round, len(all_logical_ids))
+                chosen_logical = rng.choice(all_logical_ids, size=k, replace=False).tolist()
+            elif not self.client_scores:
                 # Round 1: No previous scores exist, fallback to random
                 print(f"[Round {server_round}] No scores exist yet. Falling back to random selection.")
                 rng = np.random.default_rng(server_round)
